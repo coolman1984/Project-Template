@@ -26,6 +26,25 @@ from engine.logging_setup import configure  # noqa: E402
 from engine.webapp import server as server_module  # noqa: E402
 
 
+def prepare_console() -> None:
+    """Make printing safe on Windows.
+
+    A Windows console is not UTF-8 by default, so a project title in Arabic - or
+    even a single typographic character - could otherwise stop the application
+    before it started. Under ``pythonw.exe`` there is no console at all and the
+    streams are ``None``; printing then does nothing, which is what we want.
+    """
+
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):  # pragma: no cover - depends on the console
+            pass
+
+
 def _argument(name: str) -> str | None:
     prefix = f"--{name}="
     for value in sys.argv[1:]:
@@ -60,6 +79,7 @@ def resolve_data_dir(project_dir: str) -> str:
 
 
 def main() -> int:
+    prepare_console()
     project_dir = resolve_project_dir()
     workspace = paths.workspace_for(project_dir, resolve_data_dir(project_dir))
     configure(workspace.log_file)
@@ -70,7 +90,7 @@ def main() -> int:
     url = server_module.url_for(server, application)
 
     title = config.display_title()
-    print(f"{title} is starting…")
+    print(f"{title} is starting...")
     print(f"If your browser does not open, use this address: {url}")
 
     if "--no-browser" not in sys.argv:

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 
 _CONFIGURED = False
 
@@ -23,12 +24,15 @@ def configure(log_file: str, verbose: bool = False) -> logging.Logger:
             "%(asctime)s %(levelname)-7s %(name)s %(message)s"))
         file_handler.setLevel(logging.DEBUG)
         logger.addHandler(file_handler)
-        console = logging.StreamHandler()
-        console.setFormatter(logging.Formatter("%(levelname)-7s %(message)s"))
-        quiet = os.environ.get("APP_LOG_QUIET") == "1"
-        console.setLevel(logging.CRITICAL if quiet else
-                         (logging.DEBUG if verbose else logging.INFO))
-        logger.addHandler(console)
+        # Under pythonw.exe there is no console: sys.stderr is None and a stream
+        # handler would fail on every message. The file log is always written.
+        if sys.stderr is not None:
+            console = logging.StreamHandler()
+            console.setFormatter(logging.Formatter("%(levelname)-7s %(message)s"))
+            quiet = os.environ.get("APP_LOG_QUIET") == "1"
+            console.setLevel(logging.CRITICAL if quiet else
+                             (logging.DEBUG if verbose else logging.INFO))
+            logger.addHandler(console)
         _CONFIGURED = True
     return logger
 

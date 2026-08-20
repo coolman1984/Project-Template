@@ -84,9 +84,15 @@ administrator rights.
 | `engine/` | The shared engine (change only with proven evidence) |
 | `projects/_template/` | The starting point for a new adaptation |
 | `projects/example_sales/` | A complete working example with safe fixtures |
-| `tests/` | The proof — 108 tests |
+| `tests/` | The proof — 113 tests |
 | `tools/` | Fixture generator, template ZIP builder |
 | `runtime_inputs/` | Where the private Windows runtime is placed before delivery |
+
+## Finishing it on Windows
+
+The one remaining task before a real delivery — adding the private Windows
+runtime and proving the package on a Windows PC — is a checklist in
+[`docs/FINISH_ON_WINDOWS.md`](docs/FINISH_ON_WINDOWS.md).
 
 ## Status
 

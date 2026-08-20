@@ -9,7 +9,7 @@ honest: a gate that cannot run here is `CONDITIONAL`, never "passed".
 
 | Proof | Result |
 |---|---|
-| Full test suite (`PROJECT_TOOL test`) | **108 tests, all passing** |
+| Full test suite (`PROJECT_TOOL test`) | **113 tests, all passing** |
 | Golden run on the example fixtures | `WARNING` (2 rows quarantined by design), KPIs match `projects/example_sales/tests/golden.json` |
 | Control totals reconcile exactly | PASS (integer minor units, difference `0.00`) |
 | Every row accounted for (accepted / rejected / out of scope) | PASS, and a deliberately deleted row is detected as `BLOCK` |
@@ -26,7 +26,13 @@ honest: a gate that cannot run here is `CONDITIONAL`, never "passed".
 | Verifier refuses extra root entries, missing runtime, exposed developer folders, unsafe paths and installer commands in `START.bat` | PASS |
 | Packaged application started from the extracted ZIP and completed a real run | PASS - automated in `tests/test_delivered_package.py` (the ZIP is built, extracted and driven exactly as delivered, using this machine's interpreter in place of the Windows runtime) |
 
+The launcher is also protected against the two Windows-only traps: a console
+that cannot print non-ASCII, and `pythonw.exe`, which has no console at all
+(`tests/test_launch.py`).
+
 ## CONDITIONAL - cannot be proved in this environment
+
+The checklist that closes these is `docs/FINISH_ON_WINDOWS.md`.
 
 | Gate | Why | What is needed |
 |---|---|---|
