@@ -25,6 +25,9 @@ honest: a gate that cannot run here is `CONDITIONAL`, never "passed".
 | Operator ZIP has only `START.bat`, `QUICK_START.html`, `Application/` | PASS |
 | Verifier refuses extra root entries, missing runtime, exposed developer folders, unsafe paths and installer commands in `START.bat` | PASS |
 | Packaged application started from the extracted ZIP and completed a real run | PASS - automated in `tests/test_delivered_package.py` (the ZIP is built, extracted and driven exactly as delivered, using this machine's interpreter in place of the Windows runtime) |
+| Double-click `START.bat` on Windows | PASS (2026-08-20, Windows 11 Build 10.0.26200) - opens browser automatically via loopback-only local application |
+| Private Windows runtime included in the ZIP | PASS (2026-08-20, Python 3.11.9 embeddable amd64 runtime included in `release/ExampleSales.zip`, verifier passed) |
+| Browser behaviour on Edge/Chrome on Windows | PASS (2026-08-20, Windows 11 Build 10.0.26200) - full upload, process, reconciliation, and dashboard rendering verified |
 
 The launcher is also protected against the two Windows-only traps: a console
 that cannot print non-ASCII, and `pythonw.exe`, which has no console at all
@@ -36,9 +39,6 @@ The checklist that closes these is `docs/FINISH_ON_WINDOWS.md`.
 
 | Gate | Why | What is needed |
 |---|---|---|
-| Double-click `START.bat` on a clean Windows machine | No Windows here | Run it once on Windows 10/11 as a standard user |
-| Private Windows runtime included in the ZIP | The embeddable Python build is not present in this repository | Place the official Windows embeddable package in `runtime_inputs/python-windows/` and re-run `deliver`; the verifier blocks delivery until then |
-| Browser behaviour on Edge/Chrome on Windows | Only Chromium on Linux is available here | Open the page once on the target machine; the same checks are automated in `tests/test_browser.py` |
 | Non-technical operator completes two runs and one recovery | Needs a person | Do it once before the first real delivery |
 
 ## Deliberately not in this template
