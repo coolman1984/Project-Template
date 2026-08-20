@@ -184,6 +184,9 @@ Rules:
   `kind: table` returns any columns - the headings are shown as written.
 - `format`: `money`, `integer`, `percent` or `number`. Formatting is display
   only; the stored number is what was proved.
+- `title` is shown exactly as you write it, in both languages. Write metric and
+  chart titles in the customer's own language - the engine's own messages stay
+  in English by decision (see `.ai/CURRENT_STATE.md`).
 - Only `SELECT`/`WITH` is allowed. A metric can never modify data.
 - Dates are stored as `YYYY-MM-DD` text, so `substr(date, 1, 7)` is the month
   and normal string comparison works.

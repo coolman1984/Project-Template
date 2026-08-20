@@ -61,9 +61,18 @@ The checklist that closes these is `docs/FINISH_ON_WINDOWS.md`.
   export and the database hold all of them.
 - The dashboard is a single page: KPIs, bar charts, tables, highlights, the
   reconciliation evidence and the run history. There is no cross-filtering yet.
-- The page chrome is bilingual (English/Arabic). Metric titles, insight texts and
-  the run message appear in the language the project author wrote them in; write
-  them in the customer's language.
+- The page chrome is bilingual (English/Arabic): headings, buttons, table
+  headers and the file area switch with the العربية button. Everything the
+  **engine** writes is English only - the run message, the progress steps, the
+  built-in highlights, the reasons rows were rejected, and every error message.
+  **This is a decision taken on 2026-08-20 by the product owner, not an
+  oversight: do not translate the engine's messages unless asked to.**
+  Text the **project author** writes (metric titles, chart titles, insight
+  wording, the purpose line) appears exactly as written - write those in the
+  customer's language.
+- Every value written into the page carries `dir="auto"`, so an English sentence
+  inside an Arabic page keeps its punctuation at the correct end. The browser
+  test asserts this; do not remove it.
 - `tests/test_browser.py` needs Playwright and a local Chromium build. It skips
   itself where they are absent - a skip is not a pass. Nothing shipped inside the
   delivered package depends on it.
