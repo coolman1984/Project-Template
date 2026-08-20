@@ -1,0 +1,47 @@
+name: Bootstrap Project Template
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+
+      - name: Copy the latest reusable engine without rebuilding it
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch claude/excel-automation-template-ewsbzf \
+            https://github.com/coolman1984/Perfect-Project-Template.git /tmp/source-template
+          rsync -a --delete \
+            --exclude '.git/' \
+            --exclude '.github/workflows/bootstrap-from-proven-template.yml' \
+            /tmp/source-template/ ./
+          mkdir -p .github/workflows
+          cp "$GITHUB_WORKSPACE/.github/workflows/bootstrap-from-proven-template.yml" \
+             .github/workflows/bootstrap-from-proven-template.yml 2>/dev/null || true
+          printf '%s\n' 'Source: coolman1984/Perfect-Project-Template' > .BOOTSTRAP_SOURCE
+          printf '%s\n' 'Commit: 4dc991576ec4eed6772ca788258cce3d2ae364f5' >> .BOOTSTRAP_SOURCE
+
+      - name: Commit imported reusable engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No bootstrap changes required."
+            exit 0
+          fi
+          git commit -m "bootstrap: reuse proven Excel automation engine"
+          git push origin HEAD:main
