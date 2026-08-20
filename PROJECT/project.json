@@ -1,0 +1,87 @@
+{
+  "project": {
+    "id": "new_project",
+    "name": "New Project",
+    "report_type": "recurring_excel_report",
+    "recurrence": "manual",
+    "watch_folder": ""
+  },
+  "excel": {
+    "mode": "auto",
+    "normal_reader_first": true,
+    "com_fallback_for_protected": true,
+    "open_read_only": true,
+    "chunk_rows": 25000,
+    "never_cell_by_cell": true
+  },
+  "sources": [
+    {
+      "id": "source_1",
+      "file_pattern": "*.xlsx",
+      "sheet": "",
+      "table_or_range": "",
+      "header_row": 1,
+      "required_columns": [],
+      "business_key": [],
+      "history_mode": "upsert"
+    }
+  ],
+  "validation": {
+    "trusted_row_count": null,
+    "trusted_totals": [],
+    "required_non_null_columns": [],
+    "duplicate_policy": "by_business_key",
+    "block_on_structure_drift": true
+  },
+  "cleaning": {
+    "trim_text": true,
+    "normalize_dates": true,
+    "normalize_numbers": true,
+    "column_mappings": {}
+  },
+  "history": {
+    "local_store": "duckdb",
+    "atomic_update": true,
+    "preserve_last_good_on_failure": true,
+    "idempotent_rerun": true
+  },
+  "sql_server": {
+    "enabled": false,
+    "connection_name": "",
+    "sync_after_local_commit": true,
+    "allow_offline_pending_sync": true
+  },
+  "calculations": {
+    "sql_file": "logic.sql",
+    "kpis": []
+  },
+  "insights": {
+    "enabled": true,
+    "rules": []
+  },
+  "dashboard": {
+    "title": "New Project Dashboard",
+    "theme": "modern_2026",
+    "filters": [],
+    "kpi_cards": [],
+    "charts": [],
+    "tables": [],
+    "show_insights": true,
+    "show_run_status": true,
+    "self_contained_html": true,
+    "offline_only": true
+  },
+  "fast_gates": {
+    "source_unchanged": true,
+    "structure": true,
+    "reconciliation": true,
+    "history": true,
+    "calculations": true,
+    "dashboard_output": true
+  },
+  "output": {
+    "dashboard_file": "dashboard.html",
+    "retain_lineage": true,
+    "retain_run_history": true
+  }
+}
