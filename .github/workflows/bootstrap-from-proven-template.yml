@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  issues:
+    types: [opened]
 
 permissions:
   contents: write
@@ -15,6 +17,8 @@ jobs:
     steps:
       - name: Checkout target repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Copy the latest reusable engine without rebuilding it
         shell: bash
@@ -26,9 +30,6 @@ jobs:
             --exclude '.git/' \
             --exclude '.github/workflows/bootstrap-from-proven-template.yml' \
             /tmp/source-template/ ./
-          mkdir -p .github/workflows
-          cp "$GITHUB_WORKSPACE/.github/workflows/bootstrap-from-proven-template.yml" \
-             .github/workflows/bootstrap-from-proven-template.yml 2>/dev/null || true
           printf '%s\n' 'Source: coolman1984/Perfect-Project-Template' > .BOOTSTRAP_SOURCE
           printf '%s\n' 'Commit: 4dc991576ec4eed6772ca788258cce3d2ae364f5' >> .BOOTSTRAP_SOURCE
 
