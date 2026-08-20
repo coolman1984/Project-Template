@@ -84,7 +84,7 @@ administrator rights.
 | `engine/` | The shared engine (change only with proven evidence) |
 | `projects/_template/` | The starting point for a new adaptation |
 | `projects/example_sales/` | A complete working example with safe fixtures |
-| `tests/` | The proof — 113 tests |
+| `tests/` | The proof — 115 tests |
 | `tools/` | Fixture generator, template ZIP builder |
 | `runtime_inputs/` | Where the private Windows runtime is placed before delivery |
 

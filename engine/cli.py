@@ -137,6 +137,20 @@ def command_serve(args) -> int:
     return launch.main()
 
 
+def _display_path(path: str) -> str:
+    """A short path when possible, an absolute one when not.
+
+    On Windows a project folder may live on a different drive from the
+    repository, and a relative path between two drives does not exist.
+    """
+
+    try:
+        relative = os.path.relpath(path, REPO_ROOT)
+    except ValueError:
+        return path
+    return path if relative.startswith("..") else relative
+
+
 def command_new_project(args) -> int:
     target = os.path.abspath(args.directory or os.path.join(REPO_ROOT, "projects", args.name))
     if os.path.exists(target):
@@ -153,7 +167,7 @@ def command_new_project(args) -> int:
         handle.write("\n")
     print(f"created {target}")
     print("next: describe the sources in project.json, then run PROJECT_TOOL doctor "
-          f"--project {os.path.relpath(target, REPO_ROOT)}")
+          f"--project {_display_path(target)}")
     return 0
 
 

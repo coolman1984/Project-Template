@@ -48,7 +48,8 @@ class DeliveredPackageTest(unittest.TestCase):
         cls.process = subprocess.Popen(
             [sys.executable, os.path.join(cls.package_root, "Application", "app", "launch.py"),
              "--no-browser", "--port", "0"],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+            env=dict(os.environ, PYTHONUNBUFFERED="1"))
         cls.url = None
         deadline = time.time() + 30
         while time.time() < deadline:

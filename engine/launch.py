@@ -90,8 +90,10 @@ def main() -> int:
     url = server_module.url_for(server, application)
 
     title = config.display_title()
-    print(f"{title} is starting...")
-    print(f"If your browser does not open, use this address: {url}")
+    # flush: on Windows this output is block-buffered when it goes through a pipe,
+    # so anything reading the address would otherwise wait for the buffer, not the app.
+    print(f"{title} is starting...", flush=True)
+    print(f"If your browser does not open, use this address: {url}", flush=True)
 
     if "--no-browser" not in sys.argv:
         threading.Thread(target=lambda: (time.sleep(0.6), webbrowser.open(url)),

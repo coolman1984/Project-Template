@@ -9,7 +9,7 @@ honest: a gate that cannot run here is `CONDITIONAL`, never "passed".
 
 | Proof | Result |
 |---|---|
-| Full test suite (`PROJECT_TOOL test`) | **113 tests, all passing** |
+| Full test suite (`PROJECT_TOOL test`) | **115 tests, all passing** |
 | Golden run on the example fixtures | `WARNING` (2 rows quarantined by design), KPIs match `projects/example_sales/tests/golden.json` |
 | Control totals reconcile exactly | PASS (integer minor units, difference `0.00`) |
 | Every row accounted for (accepted / rejected / out of scope) | PASS, and a deliberately deleted row is detected as `BLOCK` |
@@ -27,7 +27,9 @@ honest: a gate that cannot run here is `CONDITIONAL`, never "passed".
 | Packaged application started from the extracted ZIP and completed a real run | PASS - automated in `tests/test_delivered_package.py` (the ZIP is built, extracted and driven exactly as delivered, using this machine's interpreter in place of the Windows runtime) |
 | Double-click `START.bat` on Windows | PASS (2026-08-20, Windows 11 Build 10.0.26200) - opens browser automatically via loopback-only local application |
 | Private Windows runtime included in the ZIP | PASS (2026-08-20, Python 3.11.9 embeddable amd64 runtime included in `release/ExampleSales.zip`, verifier passed) |
-| Browser behaviour on Edge/Chrome on Windows | PASS (2026-08-20, Windows 11 Build 10.0.26200) - full upload, process, reconciliation, and dashboard rendering verified |
+| The example run on Windows produced the agreed numbers | PASS (2026-08-20) - `WARNING`, 124/121/2/1 rows, total 298,944.47, 55 invoices, average 5,435.35, 12 customers; every reconciliation check `PASS` except the expected `link_to_customers` `WARNING` |
+| A second run on Windows with the network switched off | PASS (2026-08-20) - same totals, 0 new records, 121 unchanged |
+| `PROJECT_TOOL deliver` on Windows | PASS (2026-08-20) - `RESULT: PASS`, 77 entries, private runtime included |
 
 The launcher is also protected against the two Windows-only traps: a console
 that cannot print non-ASCII, and `pythonw.exe`, which has no console at all
@@ -40,6 +42,7 @@ The checklist that closes these is `docs/FINISH_ON_WINDOWS.md`.
 | Gate | Why | What is needed |
 |---|---|---|
 | Non-technical operator completes two runs and one recovery | Needs a person | Do it once before the first real delivery |
+| A person looking at the rendered page in Edge or Chrome on Windows | The Windows verification drove the application through its own local API, and read the numbers from it | Open the page once on Windows and look at it. The rendering itself is covered by `tests/test_browser.py` in Chromium |
 
 ## Deliberately not in this template
 

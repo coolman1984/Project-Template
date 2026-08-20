@@ -48,6 +48,36 @@ class CliTest(unittest.TestCase):
         code, _ = run_cli(["new-project", "MyReport", "--directory", target])
         self.assertEqual(code, 1, "an existing folder must never be overwritten")
 
+    def test_new_project_works_on_another_drive(self) -> None:
+        """On Windows the target may be on C: while the repository is on D:."""
+
+        import os.path as ntpath_like
+
+        original = ntpath_like.relpath
+
+        def relpath_across_drives(path, start=None):
+            raise ValueError(f"path is on mount 'C:', start on mount 'D:' ({path})")
+
+        target = os.path.join(self.work, "OtherDrive")
+        ntpath_like.relpath = relpath_across_drives
+        try:
+            code, output = run_cli(["new-project", "OtherDrive", "--directory", target])
+        finally:
+            ntpath_like.relpath = original
+        self.assertEqual(code, 0, output)
+        self.assertIn(target, output)
+        self.assertTrue(os.path.isfile(os.path.join(target, "project.json")))
+
+    def test_new_project_prints_a_short_path_inside_the_repository(self) -> None:
+        target = os.path.join(cli.REPO_ROOT, "projects", "TempCliProject")
+        try:
+            code, output = run_cli(["new-project", "TempCliProject"])
+            self.assertEqual(code, 0, output)
+            self.assertIn("projects", output)
+            self.assertNotIn(cli.REPO_ROOT, output.split("next:")[1])
+        finally:
+            shutil.rmtree(target, ignore_errors=True)
+
     def test_run_processes_an_inbox(self) -> None:
         data = os.path.join(self.work, "data")
         code, output = run_cli(["run", "--project", EXAMPLE_PROJECT, "--inbox", FIXTURES,
