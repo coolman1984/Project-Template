@@ -123,9 +123,12 @@ class DeliveredPackageTest(unittest.TestCase):
         self.assertIn(progress["result"]["status"], ("PASS", "WARNING"))
 
         dashboard = self.call("/api/dashboard")
-        values = {kpi["id"]: kpi["value"] for kpi in dashboard["kpis"]}
+        values = {metric["id"]: metric["value"] for metric in dashboard["metrics"]}
         self.assertAlmostEqual(values["total_amount"], 298944.47, places=2)
         self.assertEqual(values["invoice_count"], 55)
+        analytics = dashboard["analytics"]
+        self.assertEqual(len(analytics["charts"]), 4)
+        self.assertEqual(analytics["periods"], ["2026-01", "2026-02", "2026-03"])
         self.assertTrue(dashboard["reconciliation"])
         self.assertTrue(all(check["status"] in ("PASS", "WARNING")
                             for check in dashboard["reconciliation"]))

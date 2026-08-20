@@ -18,7 +18,9 @@
     </div>
     <div class="topbar-actions">
       <span id="status-pill" class="pill pill-idle" role="status" aria-live="polite"></span>
+      <button id="theme-toggle" type="button" class="ghost" data-i18n="theme">Dark</button>
       <button id="lang-toggle" type="button" class="ghost" aria-label="Change language">العربية</button>
+      <a id="save-copy" class="ghost" href="#" download data-i18n="saveCopy">Save a copy</a>
       <button id="print-button" type="button" class="ghost" data-i18n="print">Print</button>
     </div>
   </div>
@@ -69,6 +71,11 @@
       <dl class="run-facts" id="run-facts"></dl>
     </section>
 
+    <section id="filters" class="filters" aria-label="Filters" hidden>
+      <div class="filters-grid" id="filters-grid"></div>
+      <p class="filter-summary" id="filter-summary" aria-live="polite"></p>
+    </section>
+
     <section id="kpi-section" class="kpi-grid" aria-label="Key numbers"></section>
 
     <section id="insights-section" class="card" aria-labelledby="insights-heading" hidden>
@@ -76,7 +83,7 @@
       <ul id="insights-list" class="insights"></ul>
     </section>
 
-    <section id="charts-section" aria-label="Charts"></section>
+    <section id="charts-section" class="chart-grid" aria-label="Charts"></section>
 
     <section id="tables-section" aria-label="Tables"></section>
 
@@ -115,6 +122,8 @@
   </section>
 
 </main>
+
+<div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
 
 <footer class="footer">
   <span id="footer-note" class="muted"></span>

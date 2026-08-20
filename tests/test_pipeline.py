@@ -37,7 +37,7 @@ class GoldenRunTest(unittest.TestCase):
         self.assertEqual(self.result.rows_filtered, expected["out_of_scope"])
 
     def test_kpis_match_golden(self) -> None:
-        values = {kpi["id"]: kpi["value"] for kpi in self.dashboard["kpis"]}
+        values = {metric["id"]: metric["value"] for metric in self.dashboard["metrics"]}
         for metric_id, expected in self.golden["expected_kpis"].items():
             self.assertAlmostEqual(values[metric_id], expected, places=2, msg=metric_id)
 

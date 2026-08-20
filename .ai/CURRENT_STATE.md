@@ -9,7 +9,7 @@ honest: a gate that cannot run here is `CONDITIONAL`, never "passed".
 
 | Proof | Result |
 |---|---|
-| Full test suite (`PROJECT_TOOL test`) | **115 tests, all passing** |
+| Full test suite (`PROJECT_TOOL test`) | **146 tests, all passing** |
 | Golden run on the example fixtures | `WARNING` (2 rows quarantined by design), KPIs match `projects/example_sales/tests/golden.json` |
 | Control totals reconcile exactly | PASS (integer minor units, difference `0.00`) |
 | Every row accounted for (accepted / rejected / out of scope) | PASS, and a deliberately deleted row is detected as `BLOCK` |
@@ -21,7 +21,12 @@ honest: a gate that cannot run here is `CONDITIONAL`, never "passed".
 | Local application: upload → process → dashboard → CSV export | PASS |
 | Loopback only, session key enforced, traversal refused | PASS |
 | No page asset references the internet | PASS (asserted in `tests/test_webapp.py`, and re-checked in a real browser: zero external requests) |
-| Page rendered in Chromium: KPIs, charts, attention list, reconciliation table, print view, English and Arabic, no console errors, no sideways scrolling at 1280/900/420 px | PASS (`tests/test_browser.py`) |
+| Page rendered in Chromium: KPIs, four charts, attention list, reconciliation table, print view, English and Arabic, dark mode, no console errors, no sideways scrolling at 1280/900/420 px | PASS (`tests/test_browser.py`) |
+| Filtering equals what the database answers for the same question | PASS - every dimension value and every period cross-checked against SQL (`tests/test_analytics.py`), and re-checked in the browser: Wholesale reads 122,297.00 in the page and in the database |
+| A cube that lost a row is refused before publishing | PASS |
+| The saved copy opens from `file://` with no server: same numbers, filters still work, zero network requests | PASS (`tests/test_standalone.py`, plus a Chromium run) |
+| Watched folder notices a changed file once, and an unchanged file never | PASS (`tests/test_automation.py`) |
+| `launch.py --run-once` processes and exits with a status code | PASS |
 | Operator ZIP has only `START.bat`, `QUICK_START.html`, `Application/` | PASS |
 | Verifier refuses extra root entries, missing runtime, exposed developer folders, unsafe paths and installer commands in `START.bat` | PASS |
 | Packaged application started from the extracted ZIP and completed a real run | PASS - automated in `tests/test_delivered_package.py` (the ZIP is built, extracted and driven exactly as delivered, using this machine's interpreter in place of the Windows runtime) |
@@ -48,8 +53,9 @@ The checklist that closes these is `docs/FINISH_ON_WINDOWS.md`.
 
 | Capability | Decision |
 |---|---|
-| Excel COM / desktop automation for password-protected or protected-view files | Not implemented. The engine reads `.xlsx`/`.csv` directly, which is why it needs no Excel installation and no third-party library. A protected file must be saved as a normal `.xlsx` first. Adding COM would be a shared-engine change with a Windows-only dependency; do it only if a customer truly requires it. |
-| Watched folder, Data Hub, RPA acquisition, database/API sources, server profile, SQL Server sync, external AI review | Optional capabilities from the master plan. They stay outside the primary one-click path and must never create a second trusted formula. |
+| Excel COM / desktop automation for password-protected or protected-view files | Not implemented (step 4 of `docs/AUTOMATION_FLOW.md`). The engine reads `.xlsx`/`.csv` directly, which is why it needs no Excel installation and no third-party library. A protected file must be saved as a normal `.xlsx` first. Adding COM would be a shared-engine change with a Windows-only dependency; do it only if a customer truly requires it. |
+| DuckDB in place of SQLite | Not adopted. SQLite ships inside the standard library, so it costs the package nothing; DuckDB is a per-platform binary wheel and only pays off at tens of millions of rows. `engine/db/database.py` is the only module that would change. |
+| SQL Server synchronisation, Data Hub, RPA acquisition, database/API sources, server profile, external AI review | Optional capabilities from the master plan. They stay outside the primary one-click path and must never create a second trusted formula. |
 | `.xls` (old binary) and `.xlsb` | Not supported. Ask for `.xlsx`. |
 
 ## Known limits worth stating to a customer
@@ -59,8 +65,13 @@ The checklist that closes these is `docs/FINISH_ON_WINDOWS.md`.
 - Money is compared at the configured precision using half-up rounding.
 - The attention list on the page shows the first 500 quarantined rows; the CSV
   export and the database hold all of them.
-- The dashboard is a single page: KPIs, bar charts, tables, highlights, the
-  reconciliation evidence and the run history. There is no cross-filtering yet.
+- Charts carry at most four series; anything beyond folds into "Other". The
+  colour palette is validated for four hues in both light and dark mode, and a
+  fifth would not be reliably distinguishable.
+- A dimension with more than 12 distinct values still groups charts, but is not
+  offered as filter chips - a wall of chips is not a filter.
+- Distinct counts are whole-report figures and cannot be filtered; the page
+  labels them so nobody reads a filtered figure that is not filtered.
 - The page chrome is bilingual (English/Arabic): headings, buttons, table
   headers and the file area switch with the العربية button. Everything the
   **engine** writes is English only - the run message, the progress steps, the

@@ -1,6 +1,9 @@
 {
   "project_name": "NewProject",
-  "title": {"en": "New report", "ar": "تقرير جديد"},
+  "title": {
+    "en": "New report",
+    "ar": "تقرير جديد"
+  },
   "language": "en",
   "approval": {
     "status": "PENDING_APPROVAL",
@@ -17,7 +20,9 @@
     {
       "id": "main",
       "title": "Main input file",
-      "match": ["*.xlsx"],
+      "match": [
+        "*.xlsx"
+      ],
       "format": "xlsx",
       "sheet": null,
       "header_row": 1,
@@ -26,8 +31,12 @@
       "corrections_allowed": true,
       "missing_record_policy": "keep",
       "columns": [
-        {"source": "Column heading exactly as it appears in Excel", "field": "example_field",
-         "type": "text", "required": true}
+        {
+          "source": "Column heading exactly as it appears in Excel",
+          "field": "example_field",
+          "type": "text",
+          "required": true
+        }
       ],
       "filters": [],
       "checks": [],
@@ -37,6 +46,62 @@
   "relationships": [],
   "metrics_sql": "sql/metrics.sql",
   "dashboard": {},
+  "analytics": {
+    "fact_sql": "sql/fact.sql",
+    "date": {
+      "field": "example_date",
+      "grain": "month",
+      "title": "Month"
+    },
+    "dimensions": [
+      {
+        "id": "example_group",
+        "title": "Group",
+        "field": "example_group"
+      }
+    ],
+    "measures": [
+      {
+        "id": "value",
+        "title": "Value",
+        "field": "example_value",
+        "aggregate": "sum",
+        "format": "number",
+        "goal_direction": "up"
+      },
+      {
+        "id": "rows",
+        "title": "Rows",
+        "aggregate": "count",
+        "format": "integer"
+      }
+    ],
+    "charts": [
+      {
+        "id": "value_trend",
+        "title": "Value over time",
+        "measure": "value",
+        "by": "date",
+        "form": "line"
+      },
+      {
+        "id": "value_by_group",
+        "title": "Value by group",
+        "measure": "value",
+        "by": "example_group",
+        "form": "bar"
+      }
+    ],
+    "kpis": [
+      "value",
+      "rows"
+    ]
+  },
+  "automation": {
+    "watch_folder": "",
+    "check_every_minutes": 10,
+    "process_on_start": false
+  },
   "insights": [],
   "quality_gates": {
     "block_on_reconciliation_failure": true,

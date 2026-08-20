@@ -99,12 +99,52 @@ class BrowserTest(unittest.TestCase):
             shown = page.eval_on_selector_all(
                 ".kpi", "cards => cards.map(c => c.querySelector('.value').textContent)")
             self.assertIn("298,944.47 SAR", shown[0])
+            self.assertIn("12", shown[-1])   # the unfiltered metric is still shown
             self.assertEqual(page.inner_text("#status-pill"), "WARNING")
-            self.assertEqual(page.eval_on_selector_all("svg.chart", "charts => charts.length"), 2)
+            self.assertEqual(page.eval_on_selector_all("svg.chart", "charts => charts.length"), 4)
             self.assertGreater(
                 page.eval_on_selector_all("#attention-table tbody tr", "rows => rows.length"), 0)
             self.assertGreater(
                 page.eval_on_selector_all("#reconciliation-table tbody tr", "rows => rows.length"), 0)
+
+            # Filtering is arithmetic over pre-aggregations: the filtered figure
+            # must equal what the database says for the same question.
+            first_kpi = ".kpi .value >> nth=0"
+            self.assertIn("298,944.47", page.locator(first_kpi).inner_text())
+            page.get_by_role("button", name="Wholesale", exact=True).click()
+            page.wait_for_timeout(250)
+            self.assertIn("122,297.00", page.locator(first_kpi).inner_text())
+            self.assertIn("Wholesale", page.inner_text("#filter-summary"))
+            page.get_by_role("button", name="Reset filters").click()
+            page.wait_for_timeout(250)
+            self.assertIn("298,944.47", page.locator(first_kpi).inner_text())
+
+            # A narrowed period produces a comparison with the period before it.
+            page.select_option("#filters select >> nth=0", "2026-03")
+            page.wait_for_timeout(250)
+            deltas = page.eval_on_selector_all(".kpi .delta", "d => d.map(x => x.textContent)")
+            self.assertTrue(deltas, "no comparison appeared for a narrowed period")
+            page.get_by_role("button", name="Reset filters").click()
+            page.wait_for_timeout(250)
+
+            # Every chart can be read as a table - the relief for colours that
+            # sit below 3:1 against the surface.
+            page.locator("#charts-section .linkish").first.click()
+            page.wait_for_timeout(200)
+            self.assertGreater(
+                page.eval_on_selector_all("#charts-section table tbody tr", "r => r.length"), 0)
+            page.locator("#charts-section .linkish").first.click()
+            page.wait_for_timeout(200)
+
+            # Dark mode is a selected palette, not an automatic flip.
+            page.click("#theme-toggle")
+            page.wait_for_timeout(200)
+            self.assertEqual(page.get_attribute("html", "data-theme"), "dark")
+            self.assertEqual(
+                page.eval_on_selector_all("svg.chart", "c => c.length"), 4,
+                "charts disappeared in dark mode")
+            page.click("#theme-toggle")
+            page.wait_for_timeout(200)
 
             # Every string the engine or the project wrote must carry its own
             # direction, or an English sentence inside an Arabic page loses its

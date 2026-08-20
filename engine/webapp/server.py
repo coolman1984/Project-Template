@@ -20,7 +20,8 @@ import threading
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from engine import __version__, pipeline
+from engine import __version__, automation, pipeline
+from engine.report import standalone
 from engine.errors import UserError
 from engine.logging_setup import logger
 
@@ -74,6 +75,8 @@ class Application:
         self.workspace = workspace
         self.session_key = session_key
         self.state = RunState()
+        self.automation = automation.settings(config)
+        self.watcher = automation.Watcher(config, workspace, lambda files: self.process())
 
     # -- actions -----------------------------------------------------------
     def inbox_files(self) -> list[dict]:
@@ -122,6 +125,9 @@ class Application:
             "expected_files": self.expected_files(),
             "inbox": self.inbox_files(),
             "progress": self.state.snapshot(),
+            "automation": {"watching": bool(self.automation["watch_folder"]),
+                           "folder": os.path.basename(self.automation["watch_folder"] or ""),
+                           "every_minutes": self.automation["check_every_minutes"]},
             "dashboard": self.dashboard(),
         }
 
@@ -233,6 +239,15 @@ class Handler(BaseHTTPRequestHandler):
             self._json(self.app.state.snapshot())
         elif path == "/api/dashboard":
             self._json(self.app.dashboard())
+        elif path == "/api/export/dashboard.html":
+            document = self.app.dashboard()
+            if not document:
+                self._json({"error": "There is no result to save yet."}, 404)
+                return
+            body = standalone.build(document, self.app.config.display_title())
+            name = standalone.file_name(self.app.config.project_name, document)
+            self._send(200, body.encode("utf-8"), "text/html; charset=utf-8",
+                       {"Content-Disposition": f'attachment; filename="{name}"'})
         elif path.startswith("/api/export/"):
             metric_id = path[len("/api/export/"):].removesuffix(".csv")
             try:
@@ -302,6 +317,16 @@ class Handler(BaseHTTPRequestHandler):
             content_type += "; charset=utf-8"
         with open(target, "rb") as handle:
             self._send(200, handle.read(), content_type)
+
+
+def start_automation(application) -> None:
+    """Process what is already waiting, then keep watching while the app is open."""
+
+    if application.automation["process_on_start"] and application.inbox_files():
+        application.process()
+    if application.watcher.enabled:
+        application.watcher.check_once()
+        application.watcher.start()
 
 
 def make_server(config, workspace, host: str = "127.0.0.1", port: int = 0):

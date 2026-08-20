@@ -30,7 +30,8 @@ _SOURCE_KEYS = {
 _COLUMN_KEYS = {"source", "field", "type", "required", "trim", "default", "date_formats", "notes"}
 _ROOT_KEYS = {
     "project_name", "title", "language", "approval", "business", "sources",
-    "relationships", "metrics_sql", "dashboard", "insights", "quality_gates", "notes",
+    "relationships", "metrics_sql", "dashboard", "analytics", "insights", "quality_gates",
+    "automation", "notes",
 }
 
 

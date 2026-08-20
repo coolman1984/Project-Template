@@ -16,7 +16,8 @@ One line per file, so you never have to search the repository.
 | Path | Purpose |
 |---|---|
 | `projects/<name>/project.json` | The business meaning: sources, columns, keys, rules, totals, dashboard, insights |
-| `projects/<name>/sql/metrics.sql` | The trusted calculations, one SQL query per metric |
+| `projects/<name>/sql/metrics.sql` | The trusted whole-report calculations, one SQL query per metric |
+| `projects/<name>/sql/fact.sql` | The flat rows the dashboard filters and charts |
 | `projects/<name>/tests/golden.json` | Values that must not change silently |
 | `projects/<name>/fixtures/` | Small, safe sample files (never real customer data) |
 
@@ -41,11 +42,14 @@ One line per file, so you never have to search the repository.
 | `engine/data/history.py` | Idempotent connected history (`hist__<source>`, view `v_<source>`) |
 | `engine/data/reconcile.py` | Row population, control totals, relationships |
 | `engine/data/metrics.py` | Parses and runs the project SQL metrics |
+| `engine/data/cube.py` | Pre-aggregates the facts so the browser can filter by summing |
+| `engine/automation.py` | Watched folder and unattended runs |
 | `engine/data/insights.py` | Evidence-backed highlights |
 | `engine/data/archive.py` | Recovery archive and atomic publishing |
 | `engine/db/database.py` | SQLite access, migrations, safe identifiers |
 | `engine/db/migrations/*.sql` | Core tables |
 | `engine/report/dashboard.py` | Builds and verifies `dashboard.json` |
+| `engine/report/standalone.py` | Compiles the self-contained saved copy of the dashboard |
 | `engine/webapp/server.py` | Loopback-only local API |
 | `engine/webapp/static/*` | The one-page application (HTML, CSS, JS - no libraries) |
 | `engine/packaging/builder.py` | Stage A private application, Stage B operator ZIP |
@@ -61,4 +65,5 @@ One line per file, so you never have to search the repository.
 | `tools/make_template_zip.py` | Rebuilds the template ZIP for the next chat |
 | `tests/` | 100+ tests: Excel, config, pipeline, history, recovery, reconciliation, metrics, web, packaging, CLI |
 | `runtime_inputs/` | Where the Windows private runtime is placed before delivery |
+| `docs/AUTOMATION_FLOW.md` | The recurring-report flow, step by step, and what is deliberately not built |
 | `docs/` | Product goal, master plan, configuration reference, packaging, troubleshooting |

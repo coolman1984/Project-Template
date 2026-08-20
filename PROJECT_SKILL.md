@@ -16,18 +16,24 @@ to point it at this customer's files and return one ZIP.
    - `.ai/CONTEXT_PACK.md` - everything you need to know to adapt this template
    - `.ai/PROJECT_MAP.md` - where each file lives, one line each
    - `projects/example_sales/project.json` - a complete, working example
+
+   If someone asks "can it do X automatically?", the answer is in
+   `docs/AUTOMATION_FLOW.md` - the whole recurring-report flow, step by step,
+   with what is built and what is deliberately not.
 2. **Ask the business questions** in `.ai/BUSINESS_QUESTIONS.md`. Ask only what
    changes the numbers. Never invent a business meaning; leave it as
    `PENDING_APPROVAL` and say so.
 3. **Create the project**: `python PROJECT_TOOL.py new-project <Name>`
-4. **Edit exactly two files**:
-   - `projects/<name>/project.json` - files, columns, keys, rules, totals, dashboard
-   - `projects/<name>/sql/metrics.sql` - the trusted calculations
+4. **Edit three files, at most**:
+   - `projects/<name>/project.json` - files, columns, keys, rules, totals, filters, charts
+   - `projects/<name>/sql/metrics.sql` - the trusted whole-report calculations
+   - `projects/<name>/sql/fact.sql` - the flat rows the dashboard filters
 5. **Prove it**:
    ```
    python PROJECT_TOOL.py doctor --project projects/<name>
    python PROJECT_TOOL.py run    --project projects/<name> --inbox <folder with their Excel files>
-   python PROJECT_TOOL.py test
+   python PROJECT_TOOL.py test --quick        # ~1s; run this while you work
+   python PROJECT_TOOL.py test                # the full suite, once, before delivering
    ```
 6. **Deliver one ZIP**:
    ```
@@ -51,7 +57,10 @@ If you are editing anything under `engine/`, stop and re-read this line.
 
 ## Never do these
 
-- Never rebuild the pipeline, the Excel reader, the web page or the packager.
+- Never rebuild the pipeline, the Excel reader, the dashboard, the filters, the
+  charts or the packager. The page already has filters, date ranges, period
+  comparisons, four chart forms, dark mode, search, sorting, CSV export and a
+  self-contained "Save a copy" file. You configure them; you do not write them.
 - Never add a dependency. The engine is standard-library only, on purpose: that
   is what makes the offline package possible without pip, wheels or installers.
 - Never put a business value (a rate, a threshold, a customer name) in `engine/`.

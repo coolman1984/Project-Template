@@ -20,7 +20,7 @@ import sys
 import unittest
 
 from engine import __version__, config as config_module, paths, pipeline
-from engine.data import metrics
+from engine.data import cube, metrics
 from engine.errors import UserError
 from engine.logging_setup import configure
 from engine.packaging import builder, verifier
@@ -76,6 +76,22 @@ def command_doctor(args) -> int:
         problems.append(f"no metrics defined in {config.metrics_sql}")
     else:
         print(f"metrics      : {', '.join(d.id for d in definitions)}")
+
+    try:
+        spec = cube.parse(config)
+    except UserError as exc:
+        problems.append(f"{exc.code}: {exc.next_action} ({exc.detail})")
+        spec = None
+    if spec is None:
+        notes.append("no 'analytics' block: the page will have no filters or charts of its own")
+    else:
+        print(f"filters      : {', '.join(d.title for d in spec['dimensions']) or 'none'}"
+              f"  (by {spec['grain']})")
+        print(f"measures     : {', '.join(m.id for m in spec['measures'])}")
+        charts = spec["raw"].get("charts", [])
+        print(f"charts       : {', '.join(c.get('id', '?') for c in charts) or 'none'}")
+        if not charts:
+            notes.append("'analytics' defines no charts, so the dashboard shows only KPI cards")
 
     known = {d.id for d in definitions}
     for key in ("kpis", "charts", "tables"):
@@ -213,9 +229,21 @@ def command_deliver(args) -> int:
     return 0 if verification.ok else 1
 
 
+# The checks that matter while adapting a project: data, meaning and numbers.
+# The rest (packaging, the delivered app, the browser) only moves when the
+# shared engine moves, so an adaptation should not pay for it on every edit.
+QUICK_TESTS = ["tests.test_config", "tests.test_types", "tests.test_excel",
+               "tests.test_metrics", "tests.test_analytics", "tests.test_pipeline",
+               "tests.test_reconcile"]
+
+
 def command_test(args) -> int:
     loader = unittest.TestLoader()
-    suite = loader.discover(os.path.join(REPO_ROOT, "tests"), top_level_dir=REPO_ROOT)
+    if args.quick:
+        suite = loader.loadTestsFromNames(QUICK_TESTS)
+        print("quick: data, meaning and numbers. Run the full suite before delivering.")
+    else:
+        suite = loader.discover(os.path.join(REPO_ROOT, "tests"), top_level_dir=REPO_ROOT)
     runner = unittest.TextTestRunner(verbosity=2 if args.verbose else 1)
     return 0 if runner.run(suite).wasSuccessful() else 1
 
@@ -290,6 +318,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     test = sub.add_parser("test", help="run the template test suite")
     test.add_argument("--verbose", action="store_true")
+    test.add_argument("--quick", action="store_true",
+                      help="only the checks an adaptation can break (a few seconds)")
     test.set_defaults(func=command_test)
 
     fixtures = sub.add_parser("fixtures", help="regenerate the example Excel fixtures")

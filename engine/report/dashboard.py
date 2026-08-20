@@ -18,7 +18,7 @@ ATTENTION_LIMIT = 500
 
 
 def build(config, result, payloads: list[dict], highlights: list[dict], checks,
-          connection, run_id: str, status: str) -> dict:
+          connection, run_id: str, status: str, analytics: dict | None = None) -> dict:
     by_id = {payload["id"]: payload for payload in payloads}
     layout = config.dashboard or {}
 
@@ -86,8 +86,16 @@ def build(config, result, payloads: list[dict], highlights: list[dict], checks,
             "files": result.files,
         },
         "kpis": [_kpi(payload) for payload in selected("kpi", "kpis")],
+        # Every KPI the engine calculated, displayed or not - the evidence a
+        # golden test and a reviewer check against.
+        "metrics": [{"id": payload["id"], "title": payload.get("title", ""),
+                     "value": _clean_number(payload.get("value")),
+                     "format": payload.get("format", "number"),
+                     "unit": payload.get("unit", "")}
+                    for payload in payloads if payload.get("kind") == "kpi"],
         "charts": [_chart(payload) for payload in selected("series", "charts")],
         "tables": [_table(payload) for payload in selected("table", "tables")],
+        "analytics": analytics,
         "insights": highlights,
         "reconciliation": [
             {"source_id": c.source_id, "check": c.name, "expected": c.expected,

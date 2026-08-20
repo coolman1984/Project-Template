@@ -15,7 +15,9 @@ naming the exact path, so a typo costs one line of output rather than a run.
 | `sources` | array | yes | One entry per input file. |
 | `relationships` | array | no | How sources join. |
 | `metrics_sql` | string | no | Path to the metrics file, default `sql/metrics.sql`. |
-| `dashboard` | object | no | Which metrics appear as KPIs, charts and tables, and in what order. Omit to show everything. |
+| `dashboard` | object | no | Which metrics appear as KPIs and tables. Metric KPIs are whole-report figures; they are labelled "not filtered" when a filter is active. |
+| `analytics` | object | no | The filters, charts and comparisons; see below. |
+| `automation` | object | no | Watched folder and unattended runs; see below. |
 | `insights` | array | no | Rules that turn a metric into a highlight. |
 | `quality_gates` | object | no | `block_on_reconciliation_failure` (default `true`), `max_rejected_percent` (default `100`), `archive_keep_runs` (default `10`). |
 | `notes` | string | no | Free text for the next agent. |
@@ -72,3 +74,56 @@ A percentage such as `15%` is deliberately refused rather than guessed.
 | `filtered_rows` | Rows excluded on purpose, so nothing is unaccounted for |
 | `reconciliation` | Every proof, per run |
 | `metrics`, `insights`, `runs`, `run_files`, `run_events` | Results and evidence per run |
+
+
+## `analytics`
+
+The pre-aggregated cube the browser filters. Omit it and the page still works -
+it simply has no filters and no charts of its own.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `fact_sql` | string | `sql/fact.sql` | A file holding one SELECT over the trusted views: the date, every dimension column, every measure column. |
+| `from` | string | — | Instead of `fact_sql`: read a single view directly, e.g. `"v_sales"`. |
+| `date.field` | string | — | The column that dates a row. |
+| `date.grain` | string | `month` | `day`, `week`, `month`, `quarter`, `year`. |
+| `date.title` | string | `Period` | What to call the time axis. |
+| `dimensions[]` | array | `[]` | `{"id", "title", "field"}` - what people filter and group by. A dimension with more than 12 distinct values still groups charts, but is not offered as filter chips. |
+| `measures[]` | array | `[]` | See below. |
+| `charts[]` | array | `[]` | `{"id", "title", "measure", "by", "form", "split"}`. `by` is `date` or a dimension id; `form` is `line`, `bar`, `stacked` or `donut`; `split` divides a chart into series. |
+| `kpis[]` | array | every measure | Which measures appear as cards, in order. |
+
+### `analytics.measures[]`
+
+| Key | Meaning |
+|---|---|
+| `id` | Used by charts and KPIs. |
+| `title` | Shown to the person, exactly as written. |
+| `aggregate` | `sum`, `count` or `ratio`. |
+| `field` | The column to add up (`sum` only). |
+| `numerator`, `denominator` | Two additive measure ids (`ratio` only). |
+| `format` | `money`, `integer`, `percent`, `number`. |
+| `unit` | Appended after the number, e.g. `SAR`. |
+| `goal_direction` | `up` (default) or `down` - decides whether a rise is shown as good or bad. |
+
+**Why only these three.** A filtered figure is a sum of pre-aggregated cells, so
+it is exactly right for additive measures, and for a ratio whose two parts are
+summed before dividing. A distinct count is not additive - two months of
+distinct customers cannot be added - so it is refused here, with that reason,
+and belongs in `sql/metrics.sql` as a whole-report KPI.
+
+Every run recomputes the cube's totals straight from the fact query and refuses
+to publish if they disagree, so a lost row cannot silently change a filter.
+
+## `automation`
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `watch_folder` | string | `""` | While the application is open, new or changed files here are processed by themselves. |
+| `check_every_minutes` | number | `10` | How often to look. |
+| `process_on_start` | boolean | `false` | Process whatever is already waiting when the application opens. |
+
+A file is only processed when its content changed, so nothing is duplicated by
+looking twice. For unattended runs use a scheduler and
+`Application\runtime\pythonw.exe Application\app\launch.py --run-once`, which
+processes what is waiting and exits with a status code.

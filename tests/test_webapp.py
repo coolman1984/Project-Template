@@ -113,9 +113,14 @@ class WebAppTest(unittest.TestCase):
         self.assertEqual(progress["result"]["status"], "WARNING")
 
         dashboard = self.call("/api/dashboard")
-        self.assertEqual({kpi["id"] for kpi in dashboard["kpis"]},
+        # The displayed KPI is the one filtering cannot answer; the filterable
+        # measures travel in the analytics cube.
+        self.assertEqual({kpi["id"] for kpi in dashboard["kpis"]}, {"customers_served"})
+        self.assertEqual({metric["id"] for metric in dashboard["metrics"]},
                          {"total_amount", "invoice_count", "average_invoice_value",
                           "customers_served"})
+        self.assertEqual({measure["id"] for measure in dashboard["analytics"]["measures"]},
+                         {"revenue", "units", "lines", "average_line"})
 
         with urllib.request.urlopen(
                 f"{self.base}/api/export/top_customers.csv?k={self.key}", timeout=10) as response:

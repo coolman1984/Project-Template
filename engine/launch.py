@@ -21,7 +21,7 @@ if os.path.isdir(os.path.join(PARENT, "engine")) and PARENT not in sys.path:
     sys.path.insert(0, PARENT)   # running from the repository checkout
 
 from engine import config as config_module  # noqa: E402
-from engine import paths  # noqa: E402
+from engine import paths, pipeline  # noqa: E402
 from engine.logging_setup import configure  # noqa: E402
 from engine.webapp import server as server_module  # noqa: E402
 
@@ -85,6 +85,14 @@ def main() -> int:
     configure(workspace.log_file)
     config = config_module.load(project_dir)
 
+    if "--run-once" in sys.argv:
+        # For a scheduler: process whatever is waiting, print the outcome, exit.
+        result = pipeline.run(config, workspace)
+        print(f"{result.status}: {result.message}", flush=True)
+        if result.error:
+            print(f"{result.error['support_code']}: {result.error['next_action']}", flush=True)
+        return 0 if result.status in ("PASS", "WARNING") else 1
+
     port = int(_argument("port") or 0)
     server, application = server_module.make_server(config, workspace, port=port)
     url = server_module.url_for(server, application)
@@ -94,6 +102,8 @@ def main() -> int:
     # so anything reading the address would otherwise wait for the buffer, not the app.
     print(f"{title} is starting...", flush=True)
     print(f"If your browser does not open, use this address: {url}", flush=True)
+
+    server_module.start_automation(application)
 
     if "--no-browser" not in sys.argv:
         threading.Thread(target=lambda: (time.sleep(0.6), webbrowser.open(url)),

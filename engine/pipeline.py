@@ -17,7 +17,7 @@ import traceback
 from typing import Callable
 
 from engine import __version__, config as config_module
-from engine.data import archive, clean, history, insights, metrics, reconcile, staging
+from engine.data import archive, clean, cube, history, insights, metrics, reconcile, staging
 from engine.db import database
 from engine.errors import UserError, user_error
 from engine.excel import discovery
@@ -200,6 +200,27 @@ def run(config: config_module.ProjectConfig, workspace, progress: ProgressCallba
             payloads = metrics.compute(connection, definitions)
             metrics.save(connection, run_id, payloads)
 
+            analytics = None
+            spec = cube.parse(config)
+            if spec is not None:
+                analytics = cube.build(connection, config, spec)
+                cube_checks = [
+                    reconcile.Check(source_id="analytics", name=name, expected=expected,
+                                    actual=actual, difference="0" if status == "PASS" else "",
+                                    status=status)
+                    for name, expected, actual, status in cube.verify(connection, config, spec,
+                                                                      analytics)]
+                checks.extend(cube_checks)
+                reconcile.save(connection, run_id, cube_checks)
+                result.reconciliation = reconcile.as_dicts(checks)
+                if reconcile.summary(cube_checks) == "BLOCK":
+                    raise user_error(
+                        "E-REC-001",
+                        what_happened=("The filtered figures did not agree with the trusted "
+                                       "totals, so nothing was published."),
+                        next_action="Process again. If it repeats, send the support code on.",
+                        detail=json.dumps([c.__dict__ for c in cube_checks if c.status == "BLOCK"]))
+
             emit(*_step("insights"))
             highlights = insights.evaluate(config, payloads, {
                 "rows_rejected": result.rows_rejected,
@@ -214,7 +235,7 @@ def run(config: config_module.ProjectConfig, workspace, progress: ProgressCallba
             result.finished_at = finished_at
 
             document = dashboard_module.build(config, result, payloads, highlights, checks,
-                                              connection, run_id, status)
+                                              connection, run_id, status, analytics)
             dashboard_module.verify(document, payloads)
 
             connection.execute(

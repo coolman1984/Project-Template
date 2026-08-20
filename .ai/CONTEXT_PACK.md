@@ -19,7 +19,10 @@ certainly do not need it.
 | Trusted SQL metrics | `engine/data/metrics.py` | done, tested |
 | Evidence-backed insights | `engine/data/insights.py` | done, tested |
 | Recovery archive, atomic publish | `engine/data/archive.py` | done, tested |
-| One-page bilingual web application | `engine/webapp/` | done, tested |
+| Filterable pre-aggregations (the cube) | `engine/data/cube.py` | done, tested |
+| One-page bilingual web application with filters, charts, dark mode | `engine/webapp/` | done, tested |
+| Self-contained saved copy of the dashboard | `engine/report/standalone.py` | done, tested |
+| Watched folder and scheduled runs | `engine/automation.py` | done, tested |
 | Offline operator ZIP + verifier | `engine/packaging/` | done, tested |
 
 **You add none of this. You configure it.**
@@ -196,6 +199,80 @@ Extra columns available on every view: `record_key`, `record_version`,
 
 ---
 
+## 4b. `analytics` - the filters, charts and comparisons
+
+This block is what turns a static page into a dashboard people can slice. Add it
+to `project.json`:
+
+```jsonc
+"analytics": {
+  "fact_sql": "sql/fact.sql",          // one flat SELECT: a date, dimensions, numbers
+  "date": {"field": "invoice_date", "grain": "month", "title": "Month"},
+  "dimensions": [                       // what people filter and group by
+    {"id": "segment", "title": "Customer segment", "field": "segment"},
+    {"id": "product", "title": "Product",          "field": "product"}
+  ],
+  "measures": [
+    {"id": "revenue", "title": "Revenue", "field": "amount", "aggregate": "sum",
+     "format": "money", "unit": "SAR", "goal_direction": "up"},
+    {"id": "lines",   "title": "Invoice lines", "aggregate": "count", "format": "integer"},
+    {"id": "average_line", "title": "Average line", "aggregate": "ratio",
+     "numerator": "revenue", "denominator": "lines", "format": "money"}
+  ],
+  "charts": [
+    {"id": "revenue_trend", "title": "Revenue over time", "measure": "revenue",
+     "by": "date", "form": "line"},
+    {"id": "by_segment", "title": "Revenue by segment", "measure": "revenue",
+     "by": "segment", "form": "bar"},
+    {"id": "units_split", "title": "Units by month and segment", "measure": "units",
+     "by": "date", "split": "segment", "form": "stacked"}
+  ],
+  "kpis": ["revenue", "lines", "average_line"]
+}
+```
+
+`sql/fact.sql` is one SELECT over the trusted views returning the date column,
+every dimension column and every measure column:
+
+```sql
+SELECT s.invoice_date, s.product, COALESCE(c.segment, 'Unknown') AS segment,
+       s.amount, s.quantity
+FROM v_sales s LEFT JOIN v_customers c ON c.customer_id = s.customer_id;
+```
+
+**The rule that keeps this honest.** The engine pre-aggregates those facts once
+per run into cells of (period × dimension values). The browser filters by
+*summing cells* - it never re-derives a formula. So:
+
+- `sum` and `count` filter exactly;
+- `ratio` filters exactly, because both parts are summed first and divided after;
+- **a distinct count cannot be filtered this way and is refused** with that
+  reason. Keep it in `sql/metrics.sql` instead; it shows as a KPI marked
+  "whole report, not filtered".
+
+`grain`: `day`, `week`, `month`, `quarter`, `year`. `form`: `line`, `bar`,
+`stacked`, `donut`. Charts take up to four series; anything beyond folds into
+"Other" (the colour palette is validated for four, and a fifth hue would not be
+distinguishable). A run refuses to publish if the cube's totals do not match a
+second, independent pass over the same facts.
+
+## 4c. `automation` - running again next month
+
+```jsonc
+"automation": {
+  "watch_folder": "C:/Reports/Inbox",   // optional; the app processes new files by itself
+  "check_every_minutes": 10,
+  "process_on_start": false             // process whatever is waiting when the app opens
+}
+```
+
+A file is processed only when its **content** changed, so the same file arriving
+twice costs nothing. For unattended runs, a scheduler calls
+`Application\runtime\pythonw.exe Application\app\launch.py --run-once` as a
+standard user - no service, no administrator, no console.
+
+---
+
 ## 5. Commands
 
 ```bash
@@ -203,7 +280,8 @@ python PROJECT_TOOL.py new-project AcmeSales
 python PROJECT_TOOL.py doctor  --project projects/AcmeSales
 python PROJECT_TOOL.py run     --project projects/AcmeSales --inbox ./their_files --verbose
 python PROJECT_TOOL.py serve   --project projects/AcmeSales          # opens the browser
-python PROJECT_TOOL.py test
+python PROJECT_TOOL.py test --quick                                  # while adapting (~1s)
+python PROJECT_TOOL.py test                                          # before delivering
 python PROJECT_TOOL.py deliver --project projects/AcmeSales --output-dir release \
        --runtime runtime_inputs/python-windows
 python PROJECT_TOOL.py package verify --zip release/AcmeSales.zip
@@ -211,6 +289,12 @@ python PROJECT_TOOL.py package verify --zip release/AcmeSales.zip
 
 `doctor` is cheap and catches almost every mistake before a run. Use it after
 every edit to `project.json`.
+
+**Do not run the full suite on every edit.** `test --quick` covers what an
+adaptation can actually break - configuration, typing, metrics, the cube, the
+golden run and reconciliation - in about a second. The full suite also proves
+packaging, the delivered application and the browser; those only move when the
+shared engine moves, so run it once, before delivering.
 
 Add `--allow-unapproved` to `run` while the business owner has not confirmed the
 meaning yet. Never add it to a delivery.

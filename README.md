@@ -52,13 +52,30 @@ python PROJECT_TOOL.py run --project projects/example_sales \
 python PROJECT_TOOL.py serve --project projects/example_sales
 ```
 
+## What the finished report gives a person
+
+A single page with date-range and dimension filters, period-over-period
+comparisons, line / bar / stacked / donut charts, search and sort on every
+table, light and dark mode, English and Arabic, CSV exports, and **Save a copy**
+— one self-contained `.html` file that opens by double-clicking anywhere, with
+no application and no internet.
+
+Filtering never recalculates a trusted number: the engine pre-aggregates the
+facts once per run and the browser filters by summing those cells. A run refuses
+to publish if that cube disagrees with a second, independent pass over the same
+data.
+
+For the whole recurring-report flow — what is built, what is deliberately not —
+see [`docs/AUTOMATION_FLOW.md`](docs/AUTOMATION_FLOW.md).
+
 ## What the engine does on every run
 
 ```text
 copy the inputs safely → fingerprint them → read them block by block
 → stage the raw values with lineage → type and check → quarantine the rejects
 → merge trusted history in one transaction → reconcile rows and control totals
-→ run the trusted SQL metrics → build evidence-backed highlights
+→ run the trusted SQL metrics → pre-aggregate what people will filter
+→ build evidence-backed highlights
 → verify the dashboard → publish atomically → archive → log
 ```
 
@@ -84,7 +101,7 @@ administrator rights.
 | `engine/` | The shared engine (change only with proven evidence) |
 | `projects/_template/` | The starting point for a new adaptation |
 | `projects/example_sales/` | A complete working example with safe fixtures |
-| `tests/` | The proof — 115 tests |
+| `tests/` | The proof — 146 tests |
 | `tools/` | Fixture generator, template ZIP builder |
 | `runtime_inputs/` | Where the private Windows runtime is placed before delivery |
 
