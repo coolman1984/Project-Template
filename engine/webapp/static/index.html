@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>&#128202;</text></svg>">
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <h1 id="project-title">&nbsp;</h1>
+      <p id="project-purpose" class="muted"></p>
+    </div>
+    <div class="topbar-actions">
+      <span id="status-pill" class="pill pill-idle" role="status" aria-live="polite"></span>
+      <button id="lang-toggle" type="button" class="ghost" aria-label="Change language">العربية</button>
+      <button id="print-button" type="button" class="ghost" data-i18n="print">Print</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="card" id="files-card" aria-labelledby="files-heading">
+    <h2 id="files-heading" data-i18n="filesHeading">1. Add your files</h2>
+    <p class="muted" id="files-expected"></p>
+
+    <div id="dropzone" class="dropzone" tabindex="0" role="button"
+         aria-describedby="files-expected" data-i18n="dropzone">
+      Drag your Excel files here, or press to choose them
+    </div>
+    <input id="file-input" type="file" multiple accept=".xlsx,.xlsm,.xls,.csv" hidden>
+
+    <ul id="file-list" class="file-list"></ul>
+
+    <div class="row">
+      <button id="process-button" type="button" class="primary" data-i18n="process">Process</button>
+      <span id="process-hint" class="muted"></span>
+    </div>
+
+    <div id="progress-wrap" class="progress-wrap" hidden>
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+           aria-valuenow="0" id="progress-bar"><span id="progress-fill"></span></div>
+      <p id="progress-text" class="muted" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section id="error-card" class="card error-card" hidden aria-labelledby="error-heading">
+    <h2 id="error-heading"></h2>
+    <p id="error-safe" class="safe-note"></p>
+    <p id="error-action"></p>
+    <details>
+      <summary data-i18n="technicalDetail">Technical detail (for support)</summary>
+      <p id="error-code" class="mono"></p>
+      <pre id="error-detail" class="mono"></pre>
+    </details>
+  </section>
+
+  <section id="result" hidden>
+
+    <section class="card" aria-labelledby="summary-heading">
+      <h2 id="summary-heading" data-i18n="resultHeading">2. Your result</h2>
+      <p id="run-message" class="run-message"></p>
+      <dl class="run-facts" id="run-facts"></dl>
+    </section>
+
+    <section id="kpi-section" class="kpi-grid" aria-label="Key numbers"></section>
+
+    <section id="insights-section" class="card" aria-labelledby="insights-heading" hidden>
+      <h2 id="insights-heading" data-i18n="insightsHeading">Highlights</h2>
+      <ul id="insights-list" class="insights"></ul>
+    </section>
+
+    <section id="charts-section" aria-label="Charts"></section>
+
+    <section id="tables-section" aria-label="Tables"></section>
+
+    <section id="attention-section" class="card" aria-labelledby="attention-heading" hidden>
+      <h2 id="attention-heading" data-i18n="attentionHeading">Rows needing attention</h2>
+      <p class="muted" id="attention-note"></p>
+      <div class="table-scroll">
+        <table id="attention-table"><thead></thead><tbody></tbody></table>
+      </div>
+      <a id="attention-export" class="ghost" href="#" download data-i18n="download">Download as CSV</a>
+    </section>
+
+    <section class="card" aria-labelledby="proof-heading">
+      <h2 id="proof-heading" data-i18n="proofHeading">3. Proof the numbers are right</h2>
+      <div class="table-scroll">
+        <table id="reconciliation-table"><thead></thead><tbody></tbody></table>
+      </div>
+      <details>
+        <summary data-i18n="whereFrom">Where did the data come from?</summary>
+        <div id="lineage"></div>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="history-heading">
+      <h2 id="history-heading" data-i18n="historyHeading">Previous runs</h2>
+      <div class="table-scroll">
+        <table id="history-table"><thead></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+  </section>
+
+  <section id="empty-state" class="card" hidden>
+    <h2 data-i18n="emptyHeading">No result yet</h2>
+    <p class="muted" data-i18n="emptyBody">Add your files above and press Process.</p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <span id="footer-note" class="muted"></span>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

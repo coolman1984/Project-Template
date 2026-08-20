@@ -1,0 +1,89 @@
+"""Application entry point.
+
+``START.bat`` runs this file with the private runtime. It chooses a free
+loopback port, starts the local application and opens the browser. The user
+never sees a port, a command or a choice.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+import threading
+import time
+import webbrowser
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+PARENT = os.path.dirname(HERE)
+if os.path.isdir(os.path.join(PARENT, "engine")) and PARENT not in sys.path:
+    sys.path.insert(0, PARENT)   # running from the repository checkout
+
+from engine import config as config_module  # noqa: E402
+from engine import paths  # noqa: E402
+from engine.logging_setup import configure  # noqa: E402
+from engine.webapp import server as server_module  # noqa: E402
+
+
+def _argument(name: str) -> str | None:
+    prefix = f"--{name}="
+    for value in sys.argv[1:]:
+        if value.startswith(prefix):
+            return value[len(prefix):]
+    if f"--{name}" in sys.argv[1:]:
+        index = sys.argv.index(f"--{name}")
+        if index + 1 < len(sys.argv):
+            return sys.argv[index + 1]
+    return None
+
+
+def resolve_project_dir() -> str:
+    explicit = _argument("project") or os.environ.get("APP_PROJECT_DIR")
+    if explicit:
+        return os.path.abspath(explicit)
+    packaged = os.path.join(HERE, "project")
+    if os.path.isfile(os.path.join(packaged, "project.json")):
+        return packaged
+    raise SystemExit("No project found. Start the application from its own folder, or pass "
+                     "--project <folder>.")
+
+
+def resolve_data_dir(project_dir: str) -> str:
+    explicit = _argument("data") or os.environ.get("APP_DATA_DIR")
+    if explicit:
+        return os.path.abspath(explicit)
+    packaged_data = os.path.join(PARENT, "Data")
+    if os.path.isdir(os.path.join(HERE, "project")):
+        return packaged_data
+    return os.path.join(project_dir, "_work")
+
+
+def main() -> int:
+    project_dir = resolve_project_dir()
+    workspace = paths.workspace_for(project_dir, resolve_data_dir(project_dir))
+    configure(workspace.log_file)
+    config = config_module.load(project_dir)
+
+    port = int(_argument("port") or 0)
+    server, application = server_module.make_server(config, workspace, port=port)
+    url = server_module.url_for(server, application)
+
+    title = config.display_title()
+    print(f"{title} is starting…")
+    print(f"If your browser does not open, use this address: {url}")
+
+    if "--no-browser" not in sys.argv:
+        threading.Thread(target=lambda: (time.sleep(0.6), webbrowser.open(url)),
+                         daemon=True).start()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
