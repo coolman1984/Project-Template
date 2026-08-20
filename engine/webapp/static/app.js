@@ -59,10 +59,21 @@
   function el(tag, className, text) {
     var node = document.createElement(tag);
     if (className) { node.className = className; }
-    if (text !== undefined && text !== null) { node.textContent = String(text); }
+    if (text !== undefined && text !== null) { setText(node, text); }
+    return node;
+  }
+
+  /* A page in Arabic still shows English text - a metric title, a file name, a
+   * message the engine wrote. dir="auto" lets the browser decide the direction
+   * of each individual string, so a full stop never jumps to the wrong end. */
+  function setText(node, text) {
+    node.textContent = text === null || text === undefined ? "" : String(text);
+    node.setAttribute("dir", "auto");
     return node;
   }
   function clear(node) { while (node.firstChild) { node.removeChild(node.firstChild); } }
+
+  function _set(id, text) { return setText($(id), text); }
 
   function api(path, options) {
     var separator = path.indexOf("?") === -1 ? "?" : "&";
@@ -128,11 +139,11 @@
       });
     }
     var expected = (state.data && state.data.expected_files) || [];
-    $("files-expected").textContent = t("expected") + expected.map(function (source) {
+    _set("files-expected", t("expected") + expected.map(function (source) {
       return source.title + " (" + source.patterns.join(", ") + ")";
-    }).join(" · ");
+    }).join(" · "));
     $("process-button").disabled = !files.length;
-    $("process-hint").textContent = files.length ? "" : t("needFiles");
+    _set("process-hint", files.length ? "" : t("needFiles"));
   }
 
   function uploadFiles(fileList) {
@@ -166,9 +177,9 @@
     wrap.hidden = !progress.busy && progress.percent === 0;
     $("progress-fill").style.width = progress.percent + "%";
     $("progress-bar").setAttribute("aria-valuenow", String(progress.percent));
-    $("progress-text").textContent = progress.busy
+    _set("progress-text", progress.busy
       ? progress.percent + "% · " + progress.message
-      : (progress.message || "");
+      : (progress.message || ""));
     $("process-button").disabled = progress.busy || !(state.data.inbox || []).length;
   }
 
@@ -189,7 +200,7 @@
     api("/api/process", { method: "POST", headers: { "Content-Type": "application/json" },
                           body: "{}" })
       .then(function (result) {
-        if (!result.started) { $("process-hint").textContent = result.reason || ""; return; }
+        if (!result.started) { _set("process-hint", result.reason || ""); return; }
         setProgress({ busy: true, percent: 1, message: t("working") });
         if (state.polling) { window.clearInterval(state.polling); }
         state.polling = window.setInterval(poll, 700);
@@ -198,11 +209,11 @@
 
   /* ---------- errors ---------- */
   function showError(error) {
-    $("error-heading").textContent = error.what_happened || "";
+    _set("error-heading", error.what_happened || "");
     $("error-safe").textContent = error.trusted_data_safe === false ? "" : t("safe");
-    $("error-action").textContent = error.next_action || "";
-    $("error-code").textContent = error.support_code || "";
-    $("error-detail").textContent = error.detail || "";
+    _set("error-action", error.next_action || "");
+    _set("error-code", error.support_code || "");
+    _set("error-detail", error.detail || "");
     $("error-card").hidden = false;
     $("error-card").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -341,10 +352,10 @@
 
     var title = data.project.title[state.lang] || data.project.title.en || data.project.name;
     document.title = title;
-    $("project-title").textContent = title;
-    $("project-purpose").textContent = data.project.purpose || "";
+    _set("project-title", title);
+    _set("project-purpose", data.project.purpose || "");
     renderStatus(data.run.status);
-    $("run-message").textContent = data.run.message || "";
+    _set("run-message", data.run.message || "");
 
     var facts = $("run-facts");
     clear(facts);
@@ -382,8 +393,9 @@
     var attention = data.attention || { total: 0, rows: [] };
     $("attention-section").hidden = !attention.total;
     if (attention.total) {
-      $("attention-note").textContent = t("attentionNote") +
-        (attention.total > attention.shown ? " (" + attention.shown + "/" + attention.total + ")" : "");
+      _set("attention-note", t("attentionNote") +
+        (attention.total > attention.shown
+          ? " (" + attention.shown + "/" + attention.total + ")" : ""));
       fillTable("attention-table", [t("file"), t("row"), t("reason")],
         attention.rows.map(function (row) { return [row.file_name, row.excel_row, row.message]; }));
       $("attention-export").href = "/api/export/attention.csv?k=" + encodeURIComponent(KEY);

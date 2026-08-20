@@ -106,6 +106,17 @@ class BrowserTest(unittest.TestCase):
             self.assertGreater(
                 page.eval_on_selector_all("#reconciliation-table tbody tr", "rows => rows.length"), 0)
 
+            # Every string the engine or the project wrote must carry its own
+            # direction, or an English sentence inside an Arabic page loses its
+            # punctuation to the wrong end.
+            for selector in ("#run-message", "#project-purpose", ".kpi .title",
+                             "#attention-table tbody td", "#reconciliation-table tbody td"):
+                directions = page.eval_on_selector_all(
+                    selector, "nodes => nodes.map(n => n.getAttribute('dir'))")
+                self.assertTrue(directions, f"nothing matched {selector}")
+                self.assertTrue(all(value == "auto" for value in directions),
+                                f"{selector} does not carry dir=auto: {directions}")
+
             # No sideways scrolling, in either language, at any width.
             for language in ("en", "ar"):
                 if language == "ar":
